@@ -7,12 +7,11 @@
 
 typedef struct _iov_t
 {
-    struct iovec vec[10000];
+    struct iovec vec[1024];
     int cnt;
     char *buf;
     int ofs;
 } iov_t;
-
 
 int iprintf(iov_t *iov, char *fmt, ...)
 {
@@ -22,10 +21,10 @@ int iprintf(iov_t *iov, char *fmt, ...)
     struct iovec *vec = iov->vec;
     int *cnt = &iov->cnt;
 
-	va_list lpStart;
-	va_start(lpStart, fmt);
-	data_len = vsprintf(buf + *ofs, fmt, lpStart);
-	va_end(lpStart);
+    va_list lpStart;
+    va_start(lpStart, fmt);
+    data_len = vsprintf(buf + *ofs, fmt, lpStart);
+    va_end(lpStart);
     vec[*cnt].iov_base = buf + *ofs;
     vec[*cnt].iov_len = data_len;
     *ofs += data_len;
@@ -33,21 +32,20 @@ int iprintf(iov_t *iov, char *fmt, ...)
     return *cnt;
 }
 
-
 int main()
 {
+    int cnt = 0;
     int fd = 0;
     int str_len = 0;
-    int cnt = 0;
 
-    iov_t iov = { 0 };
+    iov_t iov = {0};
     iov.buf = (char *)malloc(20000);
 
     clock_t start1, start2, end1, end2;
-	float res1, res2;
+    float res1, res2;
 
-start1 = clock();
-    for(int i=0; i<256; i++)
+    start1 = clock();
+    for (int i = 0; i < 256; i++)
     {
         cnt = iprintf(&iov, "[%d] %s\n", cnt, "aaaa");
         cnt = iprintf(&iov, "[%d] %s\n", cnt, "bbbbbbbbb");
@@ -55,14 +53,14 @@ start1 = clock();
         cnt = iprintf(&iov, "[%d] %s\n", cnt, "cc");
     }
 
-    puts("");
     str_len = writev(fd, iov.vec, cnt);
-end1 = clock();
-res1 = (float)(end1 - start1)/CLOCKS_PER_SEC;    
+    end1 = clock();
+    res1 = (float)(end1 - start1) / CLOCKS_PER_SEC;
 
-cnt = 0;
-start2 = clock();
-    for(int i=0; i<256; i++)
+    
+    cnt = 0;
+    start2 = clock();
+    for (int i = 0; i < 256; i++)
     {
         printf("[%d] %s\n", cnt, "aaaa");
         cnt++;
@@ -73,14 +71,14 @@ start2 = clock();
         printf("[%d] %s\n", cnt, "cc");
         cnt++;
     }
-end2 = clock();
-res2 = (float)(end2 - start2)/CLOCKS_PER_SEC;    
+    end2 = clock();
+    res2 = (float)(end2 - start2) / CLOCKS_PER_SEC;
+    
+    printf("elapsed time for iprintf: %f\n", res1);
+    printf("elapsed time for  printf: %f\n", res2);
 
-printf("elapse for iprintf: %f\n", res1);
-printf("elapse for  printf: %f\n", res2);
-
-    //puts("");
     //printf("write bytes: %d\n", str_len);
+    //puts("");
 
     free(iov.buf);
     return 0;
